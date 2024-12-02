@@ -23,39 +23,32 @@ void ThreadManager::SetThreadName(DWORD dwThreadID, const char* threadName)
 UINT ThreadManager::AfxThreadWrapper(LPVOID param)
 {
 	ThreadManager* manager = static_cast<ThreadManager*>(param);
-	return manager->m_AfxPtrFunc(manager->m_Param);
-}
 
+	try
+	{
+		return manager->m_AfxPtrFunc(manager->m_Param);
+	}
+	catch (const std::exception& ex)
+	{
+		TRACE1("Exception in thread: %s\n", ex.what());
+		return 0;
+	}
+}
 
 bool ThreadManager::StartAfxThread()
 {
-	/*if (m_IsRunning)
-	{
-		return false;
-	}*/
-
-	ResetEvent(m_AfxStopEvent);															// Сбрасываем событие остановки 
-	m_AfxPtrThread = AfxBeginThread((AFX_THREADPROC)AfxThreadWrapper, (LPVOID)this);
-
-	if (m_AfxPtrThread != NULL)
-	{
-		SetThreadName(m_AfxPtrThread->m_nThreadID, m_ThreadName.c_str());
-
-		//m_IsRunning = true;
-
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	ResetEvent(m_AfxStopEvent);
+	m_AfxPtrThread = AfxBeginThread((AFX_THREADPROC)&ThreadManager::AfxThreadWrapper, this);
+	SetThreadName(m_AfxPtrThread->m_nThreadID, m_ThreadName.c_str());
+	return m_AfxPtrThread != NULL;
 }
 
 void ThreadManager::StopAfxThread()
 {
-	if (m_AfxPtrThread != NULL)
+	if (m_AfxPtrThread)
 	{
 		SetEvent(m_AfxStopEvent);
 		WaitForSingleObject(m_AfxPtrThread->m_hThread, INFINITE);
+		NotifyThreadEnd(); // Уведомляем о завершении потока
 	}
 }

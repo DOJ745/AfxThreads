@@ -157,18 +157,15 @@ HCURSOR CAftThreadsDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-
 void CAftThreadsDlg::OnBnClickedButtonStartAfx()
 {
-	m_PtrMyController->SetPtrThreadManager(new ThreadManager(m_PtrMyController->AfxFunction, (LPVOID)this, "AfxThread"));
-	m_PtrMyController->GetThreadManager()->StartAfxThread();
+	m_PtrMyController->StartThread(GetSafeHwnd());
 }
 
 
 void CAftThreadsDlg::OnBnClickedButtonStopAfx()
 {
-	m_PtrMyController->StopAfxThreadManager(m_PtrMyController->GetThreadManager());
+	m_PtrMyController->StopThread();
 }
 
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <string>
+#include <functional>
 
 class ThreadManager
 {
@@ -20,7 +21,9 @@ private:
     AfxFunctionPtr m_AfxPtrFunc;	// Указатель на функцию потока
 	LPVOID m_Param;                 // Параметр функции потока
 	std::string m_ThreadName;		// Имя потока
-    bool m_IsRunning;				// Проверка на запуск потока
+
+	typedef std::function<void()> ThreadCallback; // Тип для обратного вызова
+	ThreadCallback m_OnThreadEndCallback;        // Обратный вызов
 
 public:
     // Default constructor
@@ -29,7 +32,6 @@ public:
         , const std::string& threadName): m_AfxPtrFunc(threadFunction)
 		, m_Param(param)
 		, m_ThreadName(threadName)
-        , m_IsRunning(false)
 		, m_AfxStopEvent(::CreateEvent(NULL, TRUE, FALSE, NULL))
 		, m_AfxPtrThread (NULL)
         
@@ -38,13 +40,12 @@ public:
         //m_AfxPtrThread = NULL;
     };
     
-    // За очистку памяти и ресурсов отвечает ThreadManagerStopper
     ~ThreadManager()
     {
-        TRACE1("=== Destroying ThreadManager with thread name %s... ===\n", m_ThreadName);
- 
-        CloseHandle(m_AfxStopEvent);
-        ClearThreadPtr();
+        TRACE1("=== ~ThreadManager with thread %s ===\n", m_ThreadName.c_str());
+
+		StopAfxThread();
+		::CloseHandle(m_AfxStopEvent);
     };
 
     bool IsStopEvent() const 
@@ -62,6 +63,11 @@ public:
         m_AfxPtrThread = NULL;
     }
 
+	void ThreadManager::SetOnThreadEndCallback(const ThreadCallback& callback)
+	{
+		m_OnThreadEndCallback = callback;
+	}
+
 public:
 	bool StartAfxThread();
 	void StopAfxThread();
@@ -69,8 +75,14 @@ public:
 private:
 	// Задать имя потока (работает только в режиме Debug)
 	void SetThreadName(DWORD dwThreadID, const char* threadName);
-
-
 	static UINT AfxThreadWrapper(LPVOID param);
+
+	void NotifyThreadEnd()
+	{
+		if (m_OnThreadEndCallback)
+		{
+			m_OnThreadEndCallback();
+		}
+	}
 };
 

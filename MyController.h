@@ -1,24 +1,31 @@
 #pragma once
 #include "Windows.h"
-#include "ThreadManagerStopper.h"
 #include "ThreadManager.h"
+#include "UniquePtr.h"
+#include "ThreadParams.h"
 
-class MyController : public ThreadManagerStopper
+// Уникальные WinApi сообщения для завершения потоков 
+enum ThreadMessages
+{
+	WM_AFX_THREAD_END = WM_USER + 1,
+	WM_AFX_THREAD_FORCED_END
+};
+
+class MyController
 {
 private:
-	ThreadManager* m_PtrThreadManager;
+	UniquePtr<ThreadManager> m_PtrThreadManager;
 	int m_MyNumber;
 
 public:
-	MyController(int myNumber): m_PtrThreadManager(NULL)
-	, m_MyNumber(myNumber)
+	MyController(int myNumber): m_MyNumber(myNumber)
 	{
 
 	};
 
-	virtual ~MyController() 
+	~MyController() 
 	{
-		StopAllThreadManagers();
+		StopThread();
 	};
 
 	int GetMyNumber() const
@@ -31,21 +38,41 @@ public:
 		m_MyNumber = myNumber;
 	}
 
-	void SetPtrThreadManager(ThreadManager* ptrThreadManager)
-	{
-		m_PtrThreadManager = ptrThreadManager;
-	}
-
-	ThreadManager*& GetThreadManager()
-	{
-		return m_PtrThreadManager;
-	}
-
 public:
-	// Остановить выполнение всех потоков под управлением их мененджеров
-	void StopAllThreadManagers() override
+
+	void StartThread(HWND dialogHwnd)
 	{
-		StopAfxThreadManager(m_PtrThreadManager);
+		if (!m_PtrThreadManager.get())
+		{
+			// Создаём параметры для потока
+			ThreadParams* params = new ThreadParams();
+			params->dialogHwnd = dialogHwnd;
+			params->testValue = 42;
+			
+			// Создаём и запускаем поток
+			m_PtrThreadManager.reset(new ThreadManager(&MyController::AfxFunction, params, "MyThread"));
+
+			// Устанавливаем callback для завершения потока
+			m_PtrThreadManager->SetOnThreadEndCallback([dialogHwnd, params]() {
+				if (::IsWindow(dialogHwnd))
+				{
+					::PostMessageA(dialogHwnd, WM_AFX_THREAD_END, 0, 0);
+				}
+
+				delete params; // Освобождаем память после завершения
+			});
+
+			m_PtrThreadManager->StartAfxThread();
+		}
+	}
+
+	void StopThread()
+	{
+		if (m_PtrThreadManager.get())
+		{
+			m_PtrThreadManager->StopAfxThread();
+			m_PtrThreadManager.reset();		// Освобождаем объект
+		}
 	}
 
 	static UINT AfxFunction(LPVOID param);

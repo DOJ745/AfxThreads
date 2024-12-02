@@ -45,7 +45,10 @@
     <ClInclude Include="ThreadManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadManagerStopper.h">
+    <ClInclude Include="UniquePtr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadParams.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

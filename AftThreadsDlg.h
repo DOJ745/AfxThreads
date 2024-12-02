@@ -5,13 +5,6 @@
 #include "MyController.h"
 #include "resource.h"
 
-// ”никальные WinApi сообщени€ дл€ завершени€ потоков 
-enum ThreadMessages
-{
-	WM_AFX_THREAD_END = WM_USER + 1,
-	WM_AFX_THREAD_FORCED_END
-};
-
 // CAftThreadsDlg dialog
 class CAftThreadsDlg : public CDialogEx
 {
@@ -20,6 +13,12 @@ private:
 // Construction
 public:
 	CAftThreadsDlg(CWnd* pParent = NULL);	// standard constructor
+	
+	virtual ~CAftThreadsDlg()
+	{
+		 delete m_PtrMyController;
+		 m_PtrMyController = nullptr;
+	}
 
 	MyController* m_PtrMyController;
 

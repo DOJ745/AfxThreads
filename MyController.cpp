@@ -4,56 +4,28 @@
 
 UINT MyController::AfxFunction(LPVOID param)
 {
-	CAftThreadsDlg* dlg = (CAftThreadsDlg*)param;
+	// Преобразуем параметр в структуру
+	ThreadParams* threadParams = static_cast<ThreadParams*>(param);
 
-	int msSleep = 50;
-	int controllerNumber = dlg->m_PtrMyController->GetMyNumber();
-
-	if (dlg->m_PtrMyController->m_PtrThreadManager->IsStopEvent())
+	// Проверяем корректность указателя
+	if (threadParams == nullptr || !::IsWindow(threadParams->dialogHwnd))
 	{
-		::PostMessageA(dlg->GetSafeHwnd(), WM_AFX_THREAD_FORCED_END, (WPARAM)dlg->GetSafeHwnd(), NULL);
-		return 0;
+		return 1; // Завершаем поток с ошибкой
 	}
-	// Step 1
+
+	// Пример работы с интерфейсом
 	for (int i = 0; i < 10; i++)
 	{
-		if (dlg->m_PtrMyController->m_PtrThreadManager->IsStopEvent())
+		if (!::IsWindow(threadParams->dialogHwnd))
 		{
-			::PostMessageA(dlg->GetSafeHwnd(), WM_AFX_THREAD_FORCED_END, (WPARAM)dlg->GetSafeHwnd(), NULL);
-			return 0;
+			return 1; // Если окно закрылось, завершаем поток
 		}
 
-		dlg->SetDlgItemInt(IDC_TEXT_CHANGE, i + controllerNumber);
-		Sleep(msSleep);
+		// Изменяем текст элемента интерфейса
+		::SetDlgItemInt(threadParams->dialogHwnd, IDC_TEXT_CHANGE, i + threadParams->testValue, TRUE);
+
+		Sleep(500); // Имитируем длительную операцию
 	}
 
-	// Step 2
-	for (int i = 0; i < 10; i++)
-	{
-		if (dlg->m_PtrMyController->m_PtrThreadManager->IsStopEvent())
-		{
-			::PostMessageA(dlg->GetSafeHwnd(), WM_AFX_THREAD_FORCED_END, (WPARAM)dlg->GetSafeHwnd(), NULL);
-			return 0;
-		}
-
-		dlg->SetDlgItemInt(IDC_TEXT_CHANGE, i + controllerNumber * 2);
-		Sleep(msSleep);
-	}
-	
-	// Step 3
-	for (int i = 0; i < 10; i++)
-	{
-		if (dlg->m_PtrMyController->m_PtrThreadManager->IsStopEvent())
-		{
-			::PostMessageA(dlg->GetSafeHwnd(), WM_AFX_THREAD_FORCED_END, (WPARAM)dlg->GetSafeHwnd(), NULL);
-			return 0;
-		}
-
-		dlg->SetDlgItemInt(IDC_TEXT_CHANGE, i + controllerNumber * 3);
-		Sleep(msSleep);
-	}
-
-	::PostMessageA(dlg->GetSafeHwnd(), WM_AFX_THREAD_END, (WPARAM)dlg->GetSafeHwnd(), NULL);
-
-	return 0;
+	return 0; // Поток завершён успешно
 }
