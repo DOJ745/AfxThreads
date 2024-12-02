@@ -172,7 +172,7 @@ void CAftThreadsDlg::OnBnClickedButtonStopAfx()
 afx_msg LRESULT CAftThreadsDlg::OnAfxThreadEnd(WPARAM wParam, LPARAM lParam)
 {
 	AfxMessageBox(L"Afx thread ended normally!", MB_OK | MB_ICONINFORMATION);
-
+	m_PtrMyController->ResetThreadPtr();
 	return 0;
 }
 

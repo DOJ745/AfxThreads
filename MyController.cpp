@@ -2,30 +2,43 @@
 #include "MyController.h"
 #include "AftThreadsDlg.h"
 
+enum THREAD_FINISH_STATES
+{
+	THREAD_FINISH_SUCCESS = 0,	 // Поток завершён успешно
+	THREAD_FINISH_FORCED,		 // Поток завершён по сигналу
+	THREAD_FINISH_ERROR = -1	 // Поток завершен с ошибкой
+};
+
 UINT MyController::AfxFunction(LPVOID param)
 {
-	// Преобразуем параметр в структуру
 	ThreadParams* threadParams = static_cast<ThreadParams*>(param);
 
-	// Проверяем корректность указателя
-	if (threadParams == nullptr || !::IsWindow(threadParams->dialogHwnd))
+	if (threadParams == nullptr || !threadParams->IsDialogValid())
 	{
-		return 1; // Завершаем поток с ошибкой
+		return THREAD_FINISH_ERROR;
 	}
 
-	// Пример работы с интерфейсом
+	// Проверяем на сигнал остановки перед началом работы
+	if (threadParams->IsStopRequested())
+	{
+		threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+		return THREAD_FINISH_FORCED;
+	}
+
 	for (int i = 0; i < 10; i++)
 	{
-		if (!::IsWindow(threadParams->dialogHwnd))
+		if (threadParams->IsStopRequested() || !threadParams->IsDialogValid())
 		{
-			return 1; // Если окно закрылось, завершаем поток
+			threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+			return THREAD_FINISH_FORCED;
 		}
 
-		// Изменяем текст элемента интерфейса
-		::SetDlgItemInt(threadParams->dialogHwnd, IDC_TEXT_CHANGE, i + threadParams->testValue, TRUE);
+		::SetDlgItemInt(threadParams->dialogHwnd, IDC_TEXT_CHANGE, i + 1, TRUE);
 
-		Sleep(500); // Имитируем длительную операцию
+		Sleep(500);
 	}
 
-	return 0; // Поток завершён успешно
+	threadParams->NotifyCallback(WM_AFX_THREAD_END);
+
+	return THREAD_FINISH_SUCCESS;
 }

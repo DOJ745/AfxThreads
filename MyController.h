@@ -3,13 +3,7 @@
 #include "ThreadManager.h"
 #include "UniquePtr.h"
 #include "ThreadParams.h"
-
-// Уникальные WinApi сообщения для завершения потоков 
-enum ThreadMessages
-{
-	WM_AFX_THREAD_END = WM_USER + 1,
-	WM_AFX_THREAD_FORCED_END
-};
+#include <memory>
 
 class MyController
 {
@@ -20,7 +14,6 @@ private:
 public:
 	MyController(int myNumber): m_MyNumber(myNumber)
 	{
-
 	};
 
 	~MyController() 
@@ -39,28 +32,25 @@ public:
 	}
 
 public:
-
 	void StartThread(HWND dialogHwnd)
 	{
 		if (!m_PtrThreadManager.get())
 		{
+			// Лямбда-выражение для обратного вызова 
+			CallbackDialogMsg callbackDlg = [](HWND dialogWnd, const int msgType) 
+			{ 
+				PostMessageA(dialogWnd, msgType, 0, 0);
+			};
+
 			// Создаём параметры для потока
 			ThreadParams* params = new ThreadParams();
 			params->dialogHwnd = dialogHwnd;
-			params->testValue = 42;
-			
+			params->callbackDlg = callbackDlg;
+
+			params->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 			// Создаём и запускаем поток
-			m_PtrThreadManager.reset(new ThreadManager(&MyController::AfxFunction, params, "MyThread"));
-
-			// Устанавливаем callback для завершения потока
-			m_PtrThreadManager->SetOnThreadEndCallback([dialogHwnd, params]() {
-				if (::IsWindow(dialogHwnd))
-				{
-					::PostMessageA(dialogHwnd, WM_AFX_THREAD_END, 0, 0);
-				}
-
-				delete params; // Освобождаем память после завершения
-			});
+			m_PtrThreadManager.reset(new ThreadManager(AfxFunction, params, "MyThread"));
 
 			m_PtrThreadManager->StartAfxThread();
 		}
@@ -71,10 +61,14 @@ public:
 		if (m_PtrThreadManager.get())
 		{
 			m_PtrThreadManager->StopAfxThread();
-			m_PtrThreadManager.reset();		// Освобождаем объект
+			ResetThreadPtr();
 		}
+	}
+
+	void ResetThreadPtr()
+	{
+		m_PtrThreadManager.reset();
 	}
 
 	static UINT AfxFunction(LPVOID param);
 };
-

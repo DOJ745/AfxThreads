@@ -1,7 +1,14 @@
 #pragma once
 #include <Windows.h>
 #include <string>
-#include <functional>
+#include "ThreadParams.h"
+
+// Уникальные WinApi сообщения для завершения потоков 
+enum ThreadMessages
+{
+	WM_AFX_THREAD_END = WM_USER + 1,
+	WM_AFX_THREAD_FORCED_END
+};
 
 class ThreadManager
 {
@@ -15,58 +22,36 @@ private:
 		DWORD dwFlags;      // Резерв (всегда 0)
 	} THREADNAME_INFO;
 
+    CWinThread* m_AfxPtrThread;				// Указатель на ресурс потока
     typedef UINT(*AfxFunctionPtr)(LPVOID);
-    HANDLE m_AfxStopEvent;			// Событие для остановки потока CWinThread*
-    CWinThread* m_AfxPtrThread;		// Указатель на ресурс потока
-    AfxFunctionPtr m_AfxPtrFunc;	// Указатель на функцию потока
-	LPVOID m_Param;                 // Параметр функции потока
-	std::string m_ThreadName;		// Имя потока
-
-	typedef std::function<void()> ThreadCallback; // Тип для обратного вызова
-	ThreadCallback m_OnThreadEndCallback;        // Обратный вызов
+	AfxFunctionPtr m_AfxPtrFunc;			// Указатель на функцию потока
+	ThreadParams* m_Params;                 // Параметр функции потока
+	std::string m_ThreadName;				// Имя потока
 
 public:
     // Default constructor
     ThreadManager(AfxFunctionPtr threadFunction
-        , LPVOID param
+        , ThreadParams* params
         , const std::string& threadName): m_AfxPtrFunc(threadFunction)
-		, m_Param(param)
+		, m_Params(params)
 		, m_ThreadName(threadName)
-		, m_AfxStopEvent(::CreateEvent(NULL, TRUE, FALSE, NULL))
 		, m_AfxPtrThread (NULL)
-        
     {
-        //m_AfxStopEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
-        //m_AfxPtrThread = NULL;
     };
     
     ~ThreadManager()
     {
-        TRACE1("=== ~ThreadManager with thread %s ===\n", m_ThreadName.c_str());
+        TRACE("=== Destroying thread %s ===\n", m_ThreadName.c_str());
 
 		StopAfxThread();
-		::CloseHandle(m_AfxStopEvent);
+        delete m_Params;
+        m_Params = nullptr;
     };
 
-    bool IsStopEvent() const 
-    { 
-        return WaitForSingleObject(m_AfxStopEvent, 0) == WAIT_OBJECT_0;
-    }
-
-    bool IsThreadHandleEmpty()
+    bool IsThreadHandleEmpty() const
     {
-        return m_AfxPtrThread != NULL;
+		return m_AfxPtrThread == nullptr;
     }
-
-    void ClearThreadPtr()
-    {
-        m_AfxPtrThread = NULL;
-    }
-
-	void ThreadManager::SetOnThreadEndCallback(const ThreadCallback& callback)
-	{
-		m_OnThreadEndCallback = callback;
-	}
 
 public:
 	bool StartAfxThread();
@@ -74,15 +59,8 @@ public:
 
 private:
 	// Задать имя потока (работает только в режиме Debug)
-	void SetThreadName(DWORD dwThreadID, const char* threadName);
-	static UINT AfxThreadWrapper(LPVOID param);
+	void SetThreadName(DWORD dwThreadID, const std::string& threadName);
 
-	void NotifyThreadEnd()
-	{
-		if (m_OnThreadEndCallback)
-		{
-			m_OnThreadEndCallback();
-		}
-	}
+	static UINT AfxThreadWrapper(LPVOID param);
 };
 

@@ -14,7 +14,12 @@ public:
 	// Деструктор освобождает память
 	~UniquePtr()
 	{
-		delete m_Ptr;
+		TRACE("\t=== Deleting unique ptr...\n");
+		
+		if (m_Ptr != nullptr)
+		{
+			delete m_Ptr;
+		}
 	}
 
 	// Удаляем копирование через private-декларацию
@@ -23,7 +28,7 @@ private:
 	UniquePtr& operator=(const UniquePtr&);
 
 public:
-	// Реализуем перемещение (без noexcept)
+	// Реализуем перемещение
 	UniquePtr(UniquePtr& other)
 		: m_Ptr(other.m_Ptr)
 	{
@@ -34,8 +39,8 @@ public:
 	{
 		if (this != &other)
 		{
-			delete m_Ptr;       // Освобождаем текущий объект
-			m_Ptr = other.m_Ptr; // Забираем владение
+			delete m_Ptr;			// Освобождаем текущий объект
+			m_Ptr = other.m_Ptr;	// Забираем владение
 			other.m_Ptr = nullptr;
 		}
 		return *this;
