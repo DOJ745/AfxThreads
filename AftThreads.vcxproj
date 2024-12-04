@@ -101,6 +101,7 @@
   <ItemGroup>
     <ClInclude Include="AftThreads.h" />
     <ClInclude Include="AftThreadsDlg.h" />
+    <ClInclude Include="IThreadMethods.h" />
     <ClInclude Include="MyController.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />

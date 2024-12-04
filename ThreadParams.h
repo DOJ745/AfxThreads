@@ -2,13 +2,19 @@
 #include <afxwin.h>
 #include <functional>
 
-typedef std::function<void(HWND, const int)> CallbackDialogMsg;
+typedef std::function<void(HWND, const int, const std::string&)> CallbackDialogMsg;
 
 struct ThreadParams
 {
-	HANDLE stopEvent;			// Событие для завершения потока
-	HWND dialogHwnd;			// Дескриптор окна диалога
+	std::string threadName;
+	HANDLE stopEvent;				// Событие для завершения потока
+	HWND dlgHwnd;					// Дескриптор окна диалога
 	CallbackDialogMsg callbackDlg;	// Функция для вызова сообщения о том, что поток закончил своё выполнение
+
+	ThreadParams()
+	{
+		SetDefaultParams();
+	}
 
     ~ThreadParams()
     {
@@ -27,7 +33,7 @@ struct ThreadParams
     // Метод для проверки, что дескриптор окна валиден
     bool IsDialogValid() const
     {
-        return ::IsWindow(dialogHwnd);
+        return ::IsWindow(dlgHwnd);
     }
 
     // Метод для вызова callback, если он установлен
@@ -35,7 +41,20 @@ struct ThreadParams
     {
         if (callbackDlg && IsDialogValid())
         {
-            callbackDlg(dialogHwnd, message);
+            callbackDlg(dlgHwnd, message, threadName);
         }
     }
+
+private:
+	void SetDefaultParams()
+	{
+		callbackDlg = [](HWND dialogWnd, const int msgType, const std::string& threadName) 
+		{ 
+			// TODO: memory leak
+			std::string* pThreadName = new std::string(threadName);
+			PostMessageA(dialogWnd, msgType, 0, reinterpret_cast<LPARAM>(pThreadName));
+		};
+
+		stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	}
 };

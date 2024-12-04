@@ -3,12 +3,14 @@
 #include "ThreadManager.h"
 #include "UniquePtr.h"
 #include "ThreadParams.h"
+#include "IThreadMethods.h"
 #include <memory>
 
-class MyController
+class MyController : public IThreadMethods
 {
 private:
 	UniquePtr<ThreadManager> m_PtrThreadManager;
+	UniquePtr<ThreadManager> m_PtrThreadManagerTwo;
 	int m_MyNumber;
 
 public:
@@ -18,7 +20,18 @@ public:
 
 	~MyController() 
 	{
-		StopThread();
+		StopThread(m_PtrThreadManager, 10000);
+		StopThread(m_PtrThreadManagerTwo, 10000);
+	};
+
+	UniquePtr<ThreadManager>& GetThreadManager()
+	{
+		return m_PtrThreadManager;
+	};
+
+	UniquePtr<ThreadManager>& GetThreadManagerTwo() 
+	{
+		return m_PtrThreadManagerTwo;
 	};
 
 	int GetMyNumber() const
@@ -32,43 +45,36 @@ public:
 	}
 
 public:
-	void StartThread(HWND dialogHwnd)
+	void StartThread(UniquePtr<ThreadManager>& ptrThreadManager, HWND dlgHwnd, UINT(*threadFunc)(LPVOID), const std::string& threadName) override
 	{
-		if (!m_PtrThreadManager.get())
+		if (!ptrThreadManager.get())
 		{
-			// Лямбда-выражение для обратного вызова 
-			CallbackDialogMsg callbackDlg = [](HWND dialogWnd, const int msgType) 
-			{ 
-				PostMessageA(dialogWnd, msgType, 0, 0);
-			};
-
 			// Создаём параметры для потока
 			ThreadParams* params = new ThreadParams();
-			params->dialogHwnd = dialogHwnd;
-			params->callbackDlg = callbackDlg;
-
-			params->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			params->dlgHwnd = dlgHwnd;
+			params->threadName = threadName;
 
 			// Создаём и запускаем поток
-			m_PtrThreadManager.reset(new ThreadManager(AfxFunction, params, "MyThread"));
+			ptrThreadManager.reset(new ThreadManager(threadFunc, params, threadName));
 
-			m_PtrThreadManager->StartAfxThread();
+			ptrThreadManager->StartAfxThread();
 		}
 	}
 
-	void StopThread()
+	void StopThread(UniquePtr<ThreadManager>& ptrThreadManager, int timeoutMs) override
 	{
-		if (m_PtrThreadManager.get())
+		if (ptrThreadManager.get())
 		{
-			m_PtrThreadManager->StopAfxThread();
-			ResetThreadPtr();
+			ptrThreadManager->StopAfxThread(timeoutMs);
+			ResetThreadPtr(ptrThreadManager);
 		}
 	}
 
-	void ResetThreadPtr()
+	void ResetThreadPtr(UniquePtr<ThreadManager>& ptrThreadManager)
 	{
-		m_PtrThreadManager.reset();
+		ptrThreadManager.reset();
 	}
 
 	static UINT AfxFunction(LPVOID param);
+	static UINT AfxFunctionTwo(LPVOID param);
 };

@@ -33,9 +33,43 @@ UINT MyController::AfxFunction(LPVOID param)
 			return THREAD_FINISH_FORCED;
 		}
 
-		::SetDlgItemInt(threadParams->dialogHwnd, IDC_TEXT_CHANGE, i + 1, TRUE);
+		::SetDlgItemInt(threadParams->dlgHwnd, IDC_TEXT_CHANGE, i + 1, TRUE);
 
 		Sleep(500);
+	}
+
+	threadParams->NotifyCallback(WM_AFX_THREAD_END);
+
+	return THREAD_FINISH_SUCCESS;
+}
+
+UINT MyController::AfxFunctionTwo(LPVOID param)
+{
+	ThreadParams* threadParams = static_cast<ThreadParams*>(param);
+
+	if (threadParams == nullptr || !threadParams->IsDialogValid())
+	{
+		return THREAD_FINISH_ERROR;
+	}
+
+	// Проверяем на сигнал остановки перед началом работы
+	if (threadParams->IsStopRequested())
+	{
+		threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+		return THREAD_FINISH_FORCED;
+	}
+
+	for (int i = 0; i < 100; i++)
+	{
+		if (threadParams->IsStopRequested() || !threadParams->IsDialogValid())
+		{
+			threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+			return THREAD_FINISH_FORCED;
+		}
+
+		::SetDlgItemInt(threadParams->dlgHwnd, IDC_TEXT_CHANGE, i + 155, TRUE);
+
+		Sleep(100);
 	}
 
 	threadParams->NotifyCallback(WM_AFX_THREAD_END);

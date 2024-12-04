@@ -15,11 +15,8 @@ public:
 	~UniquePtr()
 	{
 		TRACE("\t=== Deleting unique ptr...\n");
-		
-		if (m_Ptr != nullptr)
-		{
-			delete m_Ptr;
-		}
+
+		delete m_Ptr;
 	}
 
 	// Удаляем копирование через private-декларацию
@@ -29,8 +26,7 @@ private:
 
 public:
 	// Реализуем перемещение
-	UniquePtr(UniquePtr& other)
-		: m_Ptr(other.m_Ptr)
+	UniquePtr(UniquePtr& other): m_Ptr(other.m_Ptr)
 	{
 		other.m_Ptr = nullptr; // Забираем владение
 	}

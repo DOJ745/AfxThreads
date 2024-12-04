@@ -49,13 +49,13 @@ bool ThreadManager::StartAfxThread()
 	return m_AfxPtrThread != NULL;
 }
 
-void ThreadManager::StopAfxThread()
+void ThreadManager::StopAfxThread(int timeoutMs)
 {
 	if (m_AfxPtrThread != nullptr)
 	{
 		SetEvent(m_Params->stopEvent);
 
-		if (WaitForSingleObject(m_AfxPtrThread->m_hThread, 5000) == WAIT_TIMEOUT)
+		if (WaitForSingleObject(m_AfxPtrThread->m_hThread, timeoutMs) == WAIT_TIMEOUT)
 		{
 			TRACE("Thread did not terminate in time: %s\n", m_ThreadName.c_str());
 		}

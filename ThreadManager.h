@@ -35,15 +35,15 @@ public:
         , const std::string& threadName): m_AfxPtrFunc(threadFunction)
 		, m_Params(params)
 		, m_ThreadName(threadName)
-		, m_AfxPtrThread (NULL)
+		, m_AfxPtrThread(NULL)
     {
     };
     
     ~ThreadManager()
     {
-        TRACE("=== Destroying thread %s ===\n", m_ThreadName.c_str());
+        TRACE("=== Destroying ThreadManager of thread %s ===\n", m_ThreadName.c_str());
 
-		StopAfxThread();
+		StopAfxThread(10000);
         delete m_Params;
         m_Params = nullptr;
     };
@@ -55,7 +55,7 @@ public:
 
 public:
 	bool StartAfxThread();
-	void StopAfxThread();
+	void StopAfxThread(int timeoutMs);
 
 private:
 	// «адать им€ потока (работает только в режиме Debug)

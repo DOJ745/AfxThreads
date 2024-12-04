@@ -69,6 +69,7 @@ BEGIN_MESSAGE_MAP(CAftThreadsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_STOP_AFX, &CAftThreadsDlg::OnBnClickedButtonStopAfx)
 	ON_MESSAGE(WM_AFX_THREAD_END, OnAfxThreadEnd)
 	ON_MESSAGE(WM_AFX_THREAD_FORCED_END, OnAfxThreadForcedEnd)
+	ON_BN_CLICKED(IDC_BUTTON_START_AFX2, &CAftThreadsDlg::OnBnClickedButtonStartAfx2)
 END_MESSAGE_MAP()
 
 
@@ -159,26 +160,46 @@ HCURSOR CAftThreadsDlg::OnQueryDragIcon()
 
 void CAftThreadsDlg::OnBnClickedButtonStartAfx()
 {
-	m_PtrMyController->StartThread(GetSafeHwnd());
+	m_PtrMyController->StartThread(m_PtrMyController->GetThreadManager(), GetSafeHwnd(), &MyController::AfxFunction, "AfxTestThread");
 }
 
 
 void CAftThreadsDlg::OnBnClickedButtonStopAfx()
 {
-	m_PtrMyController->StopThread();
+	m_PtrMyController->StopThread(m_PtrMyController->GetThreadManager(), 10000);
 }
 
 
 afx_msg LRESULT CAftThreadsDlg::OnAfxThreadEnd(WPARAM wParam, LPARAM lParam)
 {
-	AfxMessageBox(L"Afx thread ended normally!", MB_OK | MB_ICONINFORMATION);
-	m_PtrMyController->ResetThreadPtr();
+	std::string* lParamMsg = reinterpret_cast<std::string*>(lParam);
+	std::string tempMsg("Afx thread with name " + *lParamMsg + " ended normally!");
+	CString cstrMessage(tempMsg.c_str());
+	AfxMessageBox(cstrMessage, MB_OK | MB_ICONINFORMATION);
+
+	m_PtrMyController->ResetThreadPtr(m_PtrMyController->GetThreadManager());
+
+	delete lParamMsg;
+	lParamMsg = nullptr; 
+
 	return 0;
+
 }
 
 afx_msg LRESULT CAftThreadsDlg::OnAfxThreadForcedEnd(WPARAM wParam, LPARAM lParam)
 {
-	AfxMessageBox(L"Afx thread ended due to stop button!", MB_OK | MB_ICONINFORMATION);
+	std::string* lParamMsg = reinterpret_cast<std::string*>(lParam);
+	std::string tempMsg("Afx thread with name " + *lParamMsg + " due to stop button!");
+	CString cstrMessage(tempMsg.c_str());
+	AfxMessageBox(cstrMessage, MB_OK | MB_ICONINFORMATION);
+
+	delete lParamMsg;
+	lParamMsg = nullptr; 
 
 	return 0;
+}
+
+void CAftThreadsDlg::OnBnClickedButtonStartAfx2()
+{
+	m_PtrMyController->StartThread(m_PtrMyController->GetThreadManagerTwo(), GetSafeHwnd(), &MyController::AfxFunctionTwo, "AfxTestThreadTwo");
 }

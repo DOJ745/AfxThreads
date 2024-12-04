@@ -53,4 +53,5 @@ public:
 	{
 		m_PtrMyController = new MyController(110);
 	}
+	afx_msg void OnBnClickedButtonStartAfx2();
 };
