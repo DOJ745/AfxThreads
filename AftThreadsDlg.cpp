@@ -173,8 +173,8 @@ void CAftThreadsDlg::OnBnClickedButtonStopAfx()
 afx_msg LRESULT CAftThreadsDlg::OnAfxThreadEnd(WPARAM wParam, LPARAM lParam)
 {
 	std::string* lParamMsg = reinterpret_cast<std::string*>(lParam);
-	std::string tempMsg("Afx thread with name " + *lParamMsg + " ended normally!");
-	CString cstrMessage(tempMsg.c_str());
+
+	CString cstrMessage(lParamMsg->c_str());
 	AfxMessageBox(cstrMessage, MB_OK | MB_ICONINFORMATION);
 
 	m_PtrMyController->ResetThreadPtr(m_PtrMyController->GetThreadManager());
@@ -183,14 +183,13 @@ afx_msg LRESULT CAftThreadsDlg::OnAfxThreadEnd(WPARAM wParam, LPARAM lParam)
 	lParamMsg = nullptr; 
 
 	return 0;
-
 }
 
 afx_msg LRESULT CAftThreadsDlg::OnAfxThreadForcedEnd(WPARAM wParam, LPARAM lParam)
 {
 	std::string* lParamMsg = reinterpret_cast<std::string*>(lParam);
-	std::string tempMsg("Afx thread with name " + *lParamMsg + " due to stop button!");
-	CString cstrMessage(tempMsg.c_str());
+
+	CString cstrMessage(lParamMsg->c_str());
 	AfxMessageBox(cstrMessage, MB_OK | MB_ICONINFORMATION);
 
 	delete lParamMsg;

@@ -14,7 +14,7 @@ public:
 	// Деструктор освобождает память
 	~UniquePtr()
 	{
-		TRACE("\t=== Deleting unique ptr...\n");
+		TRACE("\t=== Deleting unique ptr... ===\n");
 
 		delete m_Ptr;
 	}

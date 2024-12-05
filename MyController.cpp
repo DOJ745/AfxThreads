@@ -11,6 +11,8 @@ enum THREAD_FINISH_STATES
 
 UINT MyController::AfxFunction(LPVOID param)
 {
+	bool isCallbackSent = false;
+
 	ThreadParams* threadParams = static_cast<ThreadParams*>(param);
 
 	if (threadParams == nullptr || !threadParams->IsDialogValid())
@@ -21,7 +23,8 @@ UINT MyController::AfxFunction(LPVOID param)
 	// Проверяем на сигнал остановки перед началом работы
 	if (threadParams->IsStopRequested())
 	{
-		threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+		threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END, "TEST MESSAGE FORCE END");
+		isCallbackSent = true;
 		return THREAD_FINISH_FORCED;
 	}
 
@@ -29,7 +32,12 @@ UINT MyController::AfxFunction(LPVOID param)
 	{
 		if (threadParams->IsStopRequested() || !threadParams->IsDialogValid())
 		{
-			threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+			if (!isCallbackSent)
+			{
+				threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END, "TEST MESSAGE FORCE END");
+				isCallbackSent = true;
+			}
+
 			return THREAD_FINISH_FORCED;
 		}
 
@@ -38,7 +46,11 @@ UINT MyController::AfxFunction(LPVOID param)
 		Sleep(500);
 	}
 
-	threadParams->NotifyCallback(WM_AFX_THREAD_END);
+	if (!isCallbackSent)
+	{
+		threadParams->NotifyCallback(WM_AFX_THREAD_END, "TEST MESSAGE END");
+		isCallbackSent = true;
+	}
 
 	return THREAD_FINISH_SUCCESS;
 }
@@ -55,7 +67,7 @@ UINT MyController::AfxFunctionTwo(LPVOID param)
 	// Проверяем на сигнал остановки перед началом работы
 	if (threadParams->IsStopRequested())
 	{
-		threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+		threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END, "TESTMESSAGE123");
 		return THREAD_FINISH_FORCED;
 	}
 
@@ -63,7 +75,7 @@ UINT MyController::AfxFunctionTwo(LPVOID param)
 	{
 		if (threadParams->IsStopRequested() || !threadParams->IsDialogValid())
 		{
-			threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END);
+			threadParams->NotifyCallback(WM_AFX_THREAD_FORCED_END, "TESTMESSAGE123");
 			return THREAD_FINISH_FORCED;
 		}
 
@@ -72,7 +84,7 @@ UINT MyController::AfxFunctionTwo(LPVOID param)
 		Sleep(100);
 	}
 
-	threadParams->NotifyCallback(WM_AFX_THREAD_END);
+	threadParams->NotifyCallback(WM_AFX_THREAD_END, "TESTMESSAGE123");
 
 	return THREAD_FINISH_SUCCESS;
 }

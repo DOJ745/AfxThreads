@@ -6,7 +6,7 @@ typedef std::function<void(HWND, const int, const std::string&)> CallbackDialogM
 
 struct ThreadParams
 {
-	std::string threadName;
+	std::string threadName;			// Имя потока (для логгирования)
 	HANDLE stopEvent;				// Событие для завершения потока
 	HWND dlgHwnd;					// Дескриптор окна диалога
 	CallbackDialogMsg callbackDlg;	// Функция для вызова сообщения о том, что поток закончил своё выполнение
@@ -18,7 +18,9 @@ struct ThreadParams
 
     ~ThreadParams()
     {
-        if (stopEvent)
+		TRACE("=== Destroying thread params of %s... ===\n", threadName.c_str());
+        
+		if (stopEvent)
         {
             CloseHandle(stopEvent);
         }
@@ -37,22 +39,20 @@ struct ThreadParams
     }
 
     // Метод для вызова callback, если он установлен
-    void NotifyCallback(int message) const
+    void NotifyCallback(int message, const std::string& text) const
     {
         if (callbackDlg && IsDialogValid())
         {
-            callbackDlg(dlgHwnd, message, threadName);
+            callbackDlg(dlgHwnd, message, text);
         }
     }
 
 private:
 	void SetDefaultParams()
 	{
-		callbackDlg = [](HWND dialogWnd, const int msgType, const std::string& threadName) 
+		callbackDlg = [](HWND dialogWnd, const int msgType, const std::string& text) 
 		{ 
-			// TODO: memory leak
-			std::string* pThreadName = new std::string(threadName);
-			PostMessageA(dialogWnd, msgType, 0, reinterpret_cast<LPARAM>(pThreadName));
+			PostMessageA(dialogWnd, msgType, 0, LPARAM(new std::string(text)));
 		};
 
 		stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);

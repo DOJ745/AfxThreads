@@ -7,7 +7,8 @@
 enum ThreadMessages
 {
 	WM_AFX_THREAD_END = WM_USER + 1,
-	WM_AFX_THREAD_FORCED_END
+	WM_AFX_THREAD_FORCED_END,
+	WM_AFX_THREAD_ERROR_END
 };
 
 class ThreadManager

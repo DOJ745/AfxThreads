@@ -35,9 +35,9 @@ UINT ThreadManager::AfxThreadWrapper(LPVOID param)
 	catch (const std::exception& ex)
 	{
 		TRACE("Exception in thread: %s\n", ex.what());
+		params->NotifyCallback(result, "Exception in thread!");
+		result = WM_AFX_THREAD_ERROR_END;
 	}
-
-	params->NotifyCallback(result);
 
 	return result;
 }
